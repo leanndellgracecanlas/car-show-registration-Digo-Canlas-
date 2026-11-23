@@ -1,0 +1,22 @@
+# Build output
+bin/
+obj/
+
+# Visual Studio / editors
+.vs/
+*.user
+*.suo
+.idea/
+
+# Frontend
+node_modules/
+dist/
+
+# Local SQLite database (created on first run)
+*.db
+*.db-shm
+*.db-wal
+
+# Secrets
+.env
+*.pfx
