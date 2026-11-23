@@ -1,0 +1,335 @@
+@host = http://localhost:5205
+@json = application/json
+# Car Show Registration API - manual test scenarios (Requirements section 3G)
+# Run them top to bottom with "Send Request". Re-run all after every change.
+# Case 01 is named so later cases can reuse its id.
+# NOTE: the plate numbers TST 10xx are used once each. To re-run the whole file,
+# delete carshow.db (and restart the API) or change the plate numbers.
+
+# ======== 1. POST /api/registrations ========
+
+### Case 01 - Valid Competitor, partly paid
+# Expected: 201 Created, Location header, CS27-xxxx, fee 2500, Pending, paymentStatus Partial
+# @name case01
+POST {{host}}/api/registrations
+Content-Type: {{json}}
+
+{
+  "participantName": "Juan Dela Cruz",
+  "contactNumber": "09171234567",
+  "email": "juan.delacruz@example.com",
+  "address": "123 Rizal St., Naga City",
+  "carMakeModel": "Toyota Supra MK4",
+  "plateNumber": "TST 1001",
+  "registrationType": "Competitor",
+  "amountPaid": 1000.0
+}
+
+### Case 02 - Valid Exhibitor, not paid
+# Expected: 201, fee 1500, amountPaid 0, Unpaid, Pending
+POST {{host}}/api/registrations
+Content-Type: {{json}}
+
+{
+  "participantName": "Juan Dela Cruz",
+  "contactNumber": "09171234567",
+  "email": "juan.delacruz@example.com",
+  "address": "123 Rizal St., Naga City",
+  "carMakeModel": "Toyota Supra MK4",
+  "plateNumber": "TST 1002",
+  "registrationType": "Exhibitor",
+  "amountPaid": 0
+}
+
+### Case 03 - Valid VIP, fully paid
+# Expected: 201, fee 5000, Paid
+POST {{host}}/api/registrations
+Content-Type: {{json}}
+
+{
+  "participantName": "Juan Dela Cruz",
+  "contactNumber": "09171234567",
+  "email": "juan.delacruz@example.com",
+  "address": "123 Rizal St., Naga City",
+  "carMakeModel": "Toyota Supra MK4",
+  "plateNumber": "TST 1003",
+  "registrationType": "VIP",
+  "amountPaid": 5000
+}
+
+# Case 04 - Registration number increases: compare the numbers of Case 01, 02 and 03 (consecutive).
+
+### Case 05 - Client tries to set server-only fields
+# Expected: 201, extra fields ignored: fee 5000, status Pending, next CS27 number
+POST {{host}}/api/registrations
+Content-Type: {{json}}
+
+{
+  "participantName": "Juan Dela Cruz",
+  "contactNumber": "09171234567",
+  "email": "juan.delacruz@example.com",
+  "address": "123 Rizal St., Naga City",
+  "carMakeModel": "Toyota Supra MK4",
+  "plateNumber": "TST 1005",
+  "registrationType": "VIP",
+  "amountPaid": 0,
+  "registrationFee": 1,
+  "status": "Confirmed",
+  "registrationNumber": "HACK-1"
+}
+
+### Case 06 - All text fields empty
+# Expected: 400, errors for all six fields
+POST {{host}}/api/registrations
+Content-Type: {{json}}
+
+{
+  "participantName": "",
+  "contactNumber": "",
+  "email": "",
+  "address": "",
+  "carMakeModel": "",
+  "plateNumber": "",
+  "registrationType": "Competitor",
+  "amountPaid": 1000.0
+}
+
+### Case 07 - Invalid contact number
+# Expected: 400, errors.ContactNumber (09XXXXXXXXX format)
+POST {{host}}/api/registrations
+Content-Type: {{json}}
+
+{
+  "participantName": "Juan Dela Cruz",
+  "contactNumber": "12345",
+  "email": "juan.delacruz@example.com",
+  "address": "123 Rizal St., Naga City",
+  "carMakeModel": "Toyota Supra MK4",
+  "plateNumber": "TST 1007",
+  "registrationType": "Competitor",
+  "amountPaid": 1000.0
+}
+
+### Case 08 - Invalid email
+# Expected: 400, errors.Email
+POST {{host}}/api/registrations
+Content-Type: {{json}}
+
+{
+  "participantName": "Juan Dela Cruz",
+  "contactNumber": "09171234567",
+  "email": "juan-at-example",
+  "address": "123 Rizal St., Naga City",
+  "carMakeModel": "Toyota Supra MK4",
+  "plateNumber": "TST 1008",
+  "registrationType": "Competitor",
+  "amountPaid": 1000.0
+}
+
+### Case 09 - Paid more than the fee
+# Expected: 400, errors.AmountPaid cannot be more than the fee (1,500)
+POST {{host}}/api/registrations
+Content-Type: {{json}}
+
+{
+  "participantName": "Juan Dela Cruz",
+  "contactNumber": "09171234567",
+  "email": "juan.delacruz@example.com",
+  "address": "123 Rizal St., Naga City",
+  "carMakeModel": "Toyota Supra MK4",
+  "plateNumber": "TST 1009",
+  "registrationType": "Exhibitor",
+  "amountPaid": 2000
+}
+
+### Case 10 - Negative amount paid
+# Expected: 400, errors.AmountPaid must be 0 or more
+POST {{host}}/api/registrations
+Content-Type: {{json}}
+
+{
+  "participantName": "Juan Dela Cruz",
+  "contactNumber": "09171234567",
+  "email": "juan.delacruz@example.com",
+  "address": "123 Rizal St., Naga City",
+  "carMakeModel": "Toyota Supra MK4",
+  "plateNumber": "TST 1010",
+  "registrationType": "Competitor",
+  "amountPaid": -100
+}
+
+### Case 11 - Unknown registration type
+# Expected: 400, nothing created
+POST {{host}}/api/registrations
+Content-Type: {{json}}
+
+{
+  "participantName": "Juan Dela Cruz",
+  "contactNumber": "09171234567",
+  "email": "juan.delacruz@example.com",
+  "address": "123 Rizal St., Naga City",
+  "carMakeModel": "Toyota Supra MK4",
+  "plateNumber": "TST 1011",
+  "registrationType": "Sponsor",
+  "amountPaid": 1000.0
+}
+
+### Case 12 - Participant name 151 characters
+# Expected: 400, errors.ParticipantName mentions the 150-character limit
+POST {{host}}/api/registrations
+Content-Type: {{json}}
+
+{
+  "participantName": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+  "contactNumber": "09171234567",
+  "email": "juan.delacruz@example.com",
+  "address": "123 Rizal St., Naga City",
+  "carMakeModel": "Toyota Supra MK4",
+  "plateNumber": "TST 1012",
+  "registrationType": "Competitor",
+  "amountPaid": 1000.0
+}
+
+### Case 13 - Duplicate plate number
+# Expected: 409 Conflict, title Registration.Conflict, detail names the plate
+POST {{host}}/api/registrations
+Content-Type: {{json}}
+
+{
+  "participantName": "Juan Dela Cruz",
+  "contactNumber": "09171234567",
+  "email": "juan.delacruz@example.com",
+  "address": "123 Rizal St., Naga City",
+  "carMakeModel": "Toyota Supra MK4",
+  "plateNumber": "TST 1001",
+  "registrationType": "Competitor",
+  "amountPaid": 1000.0
+}
+
+
+# ======== 2. GET /api/registrations (paged) ========
+
+### Case 14 - Default list
+# Expected: 200, page 1, pageSize 10, totalCount >= 25
+GET {{host}}/api/registrations
+
+### Case 15 - Newest first
+# Expected: 200, TST 10xx registrations at the top
+GET {{host}}/api/registrations
+
+### Case 16 - Second page, custom size
+# Expected: 200, page 2, 5 items
+GET {{host}}/api/registrations?page=2&pageSize=5
+
+### Case 17 - Page past the end
+# Expected: 200, items [], totalCount unchanged
+GET {{host}}/api/registrations?page=999
+
+### Case 18 - Invalid page
+# Expected: 400, errors.Page
+GET {{host}}/api/registrations?page=0
+
+### Case 19 - Page size too large
+# Expected: 400, errors.PageSize (1-50)
+GET {{host}}/api/registrations?pageSize=100
+
+
+# ======== 3. Filters ========
+
+### Case 20 - Find by type
+# Expected: 200, every item is VIP
+GET {{host}}/api/registrations?type=VIP
+
+### Case 21 - Find by status
+# Expected: 200, every item is Confirmed
+GET {{host}}/api/registrations?status=Confirmed
+
+### Case 22 - Find by participant name
+# Expected: 200, names contain juan, Case 01 included
+GET {{host}}/api/registrations?participantName=juan
+
+### Case 23 - Name search ignores case
+# Expected: 200, same as Case 22
+GET {{host}}/api/registrations?participantName=JUAN
+
+### Case 24 - Partial name match
+# Expected: 200, includes Juan Dela Cruz
+GET {{host}}/api/registrations?participantName=dela
+
+### Case 25 - Combined filters
+# Expected: 200, every item matches all three
+GET {{host}}/api/registrations?type=Competitor&status=Pending&participantName=juan
+
+### Case 26 - No matches
+# Expected: 200, items [], totalCount 0, totalPages 0
+GET {{host}}/api/registrations?participantName=zzzzzz
+
+### Case 27 - Invalid type
+# Expected: 400
+GET {{host}}/api/registrations?type=Sponsor
+
+### Case 28 - Invalid status
+# Expected: 400
+GET {{host}}/api/registrations?status=Done
+
+
+# ======== 4. GET /api/registrations/{id} ========
+
+### Case 29 - Existing ID (from Case 01)
+# Expected: 200, same data as Case 01
+GET {{host}}/api/registrations/{{case01.response.body.$.id}}
+
+### Case 30 - ID that does not exist
+# Expected: 404, title Registration.NotFound
+GET {{host}}/api/registrations/00000000-0000-0000-0000-000000000001
+
+### Case 31 - Not a valid GUID
+# Expected: 404, no route matches, no 500
+GET {{host}}/api/registrations/abc
+
+
+# ======== 5. GET /api/registrations/summary ========
+
+### Case 32 - Summary returns all fields
+# Expected: 200, totalRegistrations, confirmed, checkedIn, pending, cancelled, totalFees, totalPayments, uncollectedPayments
+GET {{host}}/api/registrations/summary
+
+# Case 33 - confirmed + checkedIn + pending + cancelled = totalRegistrations (check the response above).
+# Case 34 - totalRegistrations = totalCount from Case 14.
+# Case 35 - totalFees - totalPayments = uncollectedPayments.
+# Case 36 - Cancelled seed registrations (Rey Gonzales, Bianca Lopez, Tomas Rivera) are NOT in the money totals.
+
+### Case 37 - Summary BEFORE (note the numbers)
+# Expected: 200
+GET {{host}}/api/registrations/summary
+
+### Case 37 - New registration (Exhibitor, paid 500)
+# Expected: 201
+POST {{host}}/api/registrations
+Content-Type: {{json}}
+
+{
+  "participantName": "Juan Dela Cruz",
+  "contactNumber": "09171234567",
+  "email": "juan.delacruz@example.com",
+  "address": "123 Rizal St., Naga City",
+  "carMakeModel": "Toyota Supra MK4",
+  "plateNumber": "TST 1037",
+  "registrationType": "Exhibitor",
+  "amountPaid": 500
+}
+
+### Case 37 - Summary AFTER
+# Expected: 200, totalRegistrations +1, pending +1, totalFees +1500, totalPayments +500, uncollectedPayments +1000
+GET {{host}}/api/registrations/summary
+
+### Case 38 - /summary is not treated as an ID
+# Expected: 200 summary, not 404 or 400
+GET {{host}}/api/registrations/summary
+
+
+# ======== 6. Database persistence ========
+# Case 39 - 1) Run Case 14 and note totalCount. 2) Stop the API and start it again.
+#           3) Run Case 14 and Case 29 again: same totalCount, Case 01 still found, seed not added twice.
+# Case 40 - Open carshow.db in DB Browser for SQLite: the Registrations table has unique indexes on
+#           PlateNumber and RegistrationNumber.
