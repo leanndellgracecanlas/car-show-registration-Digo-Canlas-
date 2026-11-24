@@ -4,11 +4,18 @@ import KpiCards from './components/KpiCards';
 import RegistrationFilters from './components/RegistrationFilters';
 import RegistrationTable from './components/RegistrationTable';
 import Pagination from './components/Pagination';
+import LoadingState from './components/LoadingState';
+import EmptyState from './components/EmptyState';
+import ErrorAlert from './components/ErrorAlert';
 
 export default function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
+
+  // UI state management
+  const [isLoading] = useState(false);
+  const [errorMessage] = useState(null);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -21,7 +28,7 @@ export default function App() {
     setCurrentPage(1);
   };
 
-  // Filter items
+  // Dynamic filtering
   const filteredRegistrations = SAMPLE_REGISTRATIONS.filter((item) => {
     const matchesSearch =
       searchTerm === '' ||
@@ -36,24 +43,12 @@ export default function App() {
     return matchesSearch && matchesType && matchesStatus;
   });
 
-  // Calculate paginated slice
   const totalCount = filteredRegistrations.length;
   const totalPages = Math.ceil(totalCount / pageSize) || 1;
   const paginatedRegistrations = filteredRegistrations.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
-
-  const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      setCurrentPage(newPage);
-    }
-  };
-
-  const handlePageSizeChange = (newPageSize) => {
-    setPageSize(newPageSize);
-    setCurrentPage(1);
-  };
 
   const summary = {
     totalRegistrations: SAMPLE_REGISTRATIONS.length,
@@ -75,6 +70,7 @@ export default function App() {
 
       <main className="space-y-6">
         <KpiCards summary={summary} />
+
         <RegistrationFilters
           searchTerm={searchTerm}
           setSearchTerm={(val) => {
@@ -93,15 +89,30 @@ export default function App() {
           }}
           onResetFilters={handleResetFilters}
         />
-        <RegistrationTable items={paginatedRegistrations} />
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          pageSize={pageSize}
-          totalCount={totalCount}
-          onPageChange={handlePageChange}
-          onPageSizeChange={handlePageSizeChange}
-        />
+
+        {/* Conditional UI State Rendering */}
+        {isLoading ? (
+          <LoadingState />
+        ) : errorMessage ? (
+          <ErrorAlert message={errorMessage} onRetry={() => window.location.reload()} />
+        ) : totalCount === 0 ? (
+          <EmptyState onResetFilters={handleResetFilters} />
+        ) : (
+          <>
+            <RegistrationTable items={paginatedRegistrations} />
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalCount={totalCount}
+              onPageChange={(page) => setCurrentPage(page)}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setCurrentPage(1);
+              }}
+            />
+          </>
+        )}
       </main>
     </div>
   );
