@@ -11,8 +11,8 @@ Course: Integrative Programming 2 (CCDI Sorsogon) | Deadline: November 25, 2026
 
 | MEMBER   | ROLE               |
 | -------- | ------------------ |
-| `<Name>` | Backend Developer  |
-| `<Name>` | Frontend Developer |
+| `<Digo>` | Backend Developer  |
+| `<Canlas>` | Frontend Developer |
 
 ## Project layout
 
