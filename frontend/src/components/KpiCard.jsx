@@ -1,26 +1,21 @@
 import React from 'react';
+import { formatCurrency } from '../utils/formatters';
 
 export default function KpiCard({ title, value, isCurrency = false, icon }) {
-  const formatValue = (val) => {
-    if (val === undefined || val === null) return '—';
-    if (isCurrency) {
-      return new Intl.NumberFormat('en-PH', {
-        style: 'currency',
-        currency: 'PHP',
-        maximumFractionDigits: 0,
-      }).format(val);
-    }
-    return val.toLocaleString();
+  const displayValue = () => {
+    if (value === undefined || value === null) return '-';
+    if (isCurrency) return formatCurrency(value);
+    return value.toLocaleString();
   };
 
   return (
-    <div>
-      <div>
-        <span>{title}</span>
-        {icon && <span>{icon}</span>}
+    <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{title}</span>
+        {icon && <span className="text-gray-400 text-lg">{icon}</span>}
       </div>
-      <div>
-        {formatValue(value)}
+      <div className="mt-2 text-2xl font-bold text-gray-900 font-mono">
+        {displayValue()}
       </div>
     </div>
   );
