@@ -1,34 +1,22 @@
 import React from 'react';
-import { SAMPLE_REGISTRATIONS } from './api/sample-data';
-import KpiCards from './components/KpiCards';
-import RegistrationTable from './components/RegistrationTable';
+import KpiCard from './KpiCard';
 
-export default function App() {
-  // Compute summary numbers dynamically from sample dataset
-  const summary = {
-    totalRegistrations: SAMPLE_REGISTRATIONS.length,
-    totalPayments: SAMPLE_REGISTRATIONS.reduce(
-      (sum, item) => sum + (item.amountPaid || 0),
-      0
-    ),
-    uncollectedPayments: SAMPLE_REGISTRATIONS.reduce(
-      (sum, item) => sum + Math.max(0, (item.registrationFee || 0) - (item.amountPaid || 0)),
-      0
-    ),
-    confirmed: SAMPLE_REGISTRATIONS.filter((item) => item.status === 'Confirmed').length,
-    checkedIn: SAMPLE_REGISTRATIONS.filter((item) => item.status === 'CheckedIn').length,
-  };
+export default function KpiCards({ summary = {} }) {
+  const {
+    totalRegistrations = 0,
+    totalPayments = 0,
+    uncollectedPayments = 0,
+    confirmed = 0,
+    checkedIn = 0,
+  } = summary;
 
   return (
-    <div>
-      <header>
-        <h1>Car Show 2027</h1>
-        <p>Registration Dashboard</p>
-      </header>
-      <main>
-        <KpiCards summary={summary} />
-        <RegistrationTable items={SAMPLE_REGISTRATIONS} />
-      </main>
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 mb-6">
+      <KpiCard title="Total Registrations" value={totalRegistrations} icon="👥" />
+      <KpiCard title="Total Payments" value={totalPayments} isCurrency icon="💳" />
+      <KpiCard title="Uncollected Payments" value={uncollectedPayments} isCurrency icon="👛" />
+      <KpiCard title="Confirmed" value={confirmed} icon="✅" />
+      <KpiCard title="Checked In" value={checkedIn} icon="📥" />
     </div>
   );
 }
