@@ -11,7 +11,7 @@ export default function KpiCards({ summary = {} }) {
   } = summary;
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 mb-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
       <KpiCard title="Total Registrations" value={totalRegistrations} icon="👥" />
       <KpiCard title="Total Payments" value={totalPayments} isCurrency icon="💳" />
       <KpiCard title="Uncollected Payments" value={uncollectedPayments} isCurrency icon="👛" />
